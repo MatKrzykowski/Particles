@@ -5,14 +5,15 @@
 # Changelog:
 # 03.11.2016 - script revision
 
-# Import my common file
-from BM_common import Particles, Particle
+import sys
 
 # Libraries import
 import pygame
-import sys
 import pygame.gfxdraw
 from pygame.locals import QUIT
+
+# Import my common file
+from BM_common import Particle, Particles
 
 # Size of the window
 WIDTH, HEIGHT = 800, 600
@@ -21,6 +22,7 @@ WIDTH, HEIGHT = 800, 600
 def draw_particle(self, screen):
     pygame.draw.circle(screen, self.color, self.intpos, self.radius)
     pygame.gfxdraw.aacircle(screen, *self.intpos, self.radius, self.color)
+
 
 Particle.draw_particle = draw_particle
 
@@ -37,6 +39,7 @@ def draw_FPS(screen):
                                     True, (0, 0, 0))
     textRectObj.topright = (699, 0)
     screen.blit(textSurfaceObj, textRectObj)
+
 
 if __name__ == "__main__":
     pygame.init()  # Initialize pygame
