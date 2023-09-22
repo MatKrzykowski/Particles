@@ -17,12 +17,16 @@
 # Libraries imports
 import numpy as np  # Import math modules
 
+import pygame
+
 # Size of the window
 WIDTH, HEIGHT = 800, 600
 
 # Colors
-PURPLE = (0, 128, 255)
+BLACK = (0, 0, 0)
+BLUE = (0, 128, 255)
 RED = (255, 0, 0)
+PURPLE = (200, 0, 255)
 
 
 def sqlength(A):
@@ -49,14 +53,16 @@ def simulation_step(i, j, dist):
     """
     if dist <= i.radius + j.radius:  # Collision if distance too small
         # Scalar product appearing in the calculations
-        scalar = np.sum((i.position - j.position) * (i.velocity - j.velocity))
+        i_pos, i_vel = i.position, i.velocity
+        j_pos, j_vel = j.position, j.velocity
+        scalar = np.sum((i_pos - j_pos) * (i_vel - j_vel))
         if scalar < 0.0:  # Check if collision didn't already happen
             # Calculation of constant appearing in the calculations
             A = 2 * scalar / (i.mass + j.mass) / dist**2
             # Change in the velocity vectors for i and j
             i.velocity, j.velocity = \
-                i.velocity - j.mass * A * (i.position - j.position), \
-                j.velocity - i.mass * A * (j.position - i.position)
+                i_vel - j.mass * A * (i_pos - j_pos), \
+                j_vel - i.mass * A * (j_pos - i_pos)
 
 
 ##########################################################################
@@ -76,7 +82,8 @@ class Particles():
         self.items = []
 
         # Matrix with infinite diagonal elements
-        self.inf_diag = np.diag(np.inf * np.ones(n, dtype="float64"))
+        self.inf_triag = np.finfo(np.float64).max / 2 * np.tri(
+            n, n, dtype="float64").transpose()
 
         self.generate_particles()
 
@@ -85,7 +92,7 @@ class Particles():
         if self.n_big >= 1:
             self.items.append(Particle(100, 100, 200, 300, 100, color=RED))
         if self.n_big >= 2:
-            self.items.append(Particle(500, 100, 100, 300, 100, color=PURPLE))
+            self.items.append(Particle(500, 100, 100, 300, 100, color=BLUE))
 
     def generate_small(self):
         """Add up to n small particles in random locations."""
@@ -122,7 +129,7 @@ class Particles():
 
         Returns total energy of the particles, double.
         """
-        return sum([item.kinetic for item in self.items])
+        return sum(item.kinetic for item in self.items)
 
     def time_evolution(self):
         """Time evolution method for particles."""
@@ -136,55 +143,33 @@ class Particles():
 
         # 2D array of distance vectors
         dist_arr = dist_arr.reshape(self.n, 1, 2) - dist_arr
-        dist_arr = np.sqrt((dist_arr**2).sum(2))
+        dist_arr = np.hypot(dist_arr[:, :, 0], dist_arr[:, :, 1])
 
-        dist_arr += self.inf_diag  # Make diagonal elements, otherwise 0, infinite
+        dist_arr += self.inf_triag  # Make diagonal elements, otherwise 0, infinite
 
         if self.n_big >= 2:  # Unique interaction of 2 big particles
-            simulation_step(self.items[0], self.items[1], dist_arr[0, 1])
+            simulation_step(self.items[0], self.items[1], dist_arr[1, 0])
 
             # Remaining interactions
             dist_arr = dist_arr[2:, :]  # Remove unnecessary elements
 
-        while True:  # Remaining interactions if available
-            min_arg = np.argmin(dist_arr, 0)  # Find arguments for minima
-            # Assign pairs i,j so that they point to the minima
-            for i, j in enumerate(min_arg):
-                # Simulation step for found pair of particles
-                simulation_step(self.items[i], self.items[j + self.n_big],
-                                dist_arr[j, i])
-                # Make visited values infinite
-                if i < len(min_arg) - self.n_big:
-                    dist_arr[i, j] = np.inf
-                dist_arr[j, i] = np.inf
+        min_arg = np.argmin(dist_arr, 0)  # Find arguments for minima
+        # Assign pairs i,j so that they point to the minima
+        for i, j in enumerate(min_arg):
+            # Simulation step for found pair of particles
+            simulation_step(self.items[i], self.items[j + self.n_big],
+                            dist_arr[j, i])
 
-            # Break loop if all remaining distance larger than max interaction
-            # dist
-            min_val = np.min(dist_arr, 0)
-            if (min_val >= self.max_dist[0:len(min_val)]).all():
-                break
-
-            # Otherwise remove as much right hand side elements as possible
-            i = len(min_val) - 1  # Index to be removed
-            while True:
-                # If element is safe to be removed, continue
-                if min_val[i] > self.max_dist[i]:
-                    i -= 1
-                # If not slice the distance array and break from the loop
-                else:
-                    dist_arr = dist_arr[:i + 1, :i + 1]
-                    break
-
-            # Reflect from walls and other effects
-            for item in self.items:
-                item.reflect()  # Reflect particle from walls
+        # Reflect from walls and other effects
+        for item in self.items:
+            item.reflect()  # Reflect particle from walls
 
 
 class Particle:
     """Class describing particle"""
     rho = 1.0  # Density
 
-    def __init__(self, x, y, vx, vy, radius, color=(200, 0, 255)):
+    def __init__(self, x, y, vx, vy, radius, color=PURPLE):
         """Instantiation operation.
 
         x, y - position [pixel], integer,
@@ -235,3 +220,8 @@ class Particle:
     def intpos(self):
         """Return position tuple cast onto integers."""
         return (int(self.position[0]), int(self.position[1]))
+
+
+    def draw_particle(self, screen):
+        pygame.draw.circle(screen, self.color, self.intpos, self.radius)
+        pygame.gfxdraw.aacircle(screen, *self.intpos, self.radius, self.color)

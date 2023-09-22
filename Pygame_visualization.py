@@ -6,20 +6,10 @@ import pygame.gfxdraw
 import pygame.locals
 
 # Import my common file
-from BM_common import Particle, Particles
+from BM_common import Particle, Particles, BLACK
 
 # Size of the window
 WIDTH, HEIGHT = 800, 600
-BLACK = (0, 0, 0)
-
-
-def draw_particle(self, screen):
-    pygame.draw.circle(screen, self.color, self.intpos, self.radius)
-    pygame.gfxdraw.aacircle(screen, *self.intpos, self.radius, self.color)
-
-
-Particle.draw_particle = draw_particle
-
 
 def draw_energy(screen, objs, font):
     text_render = font.render("Energy: " + str(objs.total_energy), True,
@@ -49,7 +39,7 @@ if __name__ == "__main__":
     pygame.display.set_caption('Brownian motion')
 
     # Generate list of particles
-    particles = Particles(3, 5, 2, 200, 0.002)
+    particles = Particles(3, 5, 2, 300, 0.002)
 
     # Prepare print of the text
     fontObj = pygame.font.Font('freesansbold.ttf', FONTSIZE)
