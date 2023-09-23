@@ -76,6 +76,7 @@ class Particles():
         self.n = n
         self.n_big = n_big
         self.dt = dt
+        self.g = 0 # TODO: Account for gravity in energy calculation
 
         self.subgid_size = 100
 
@@ -161,6 +162,7 @@ class Particles():
 
         # Reflect from walls and other effects
         for item in self.items:
+            item.apply_gravity(self.g, self.dt)
             item.reflect()  # Reflect particle from walls
 
     def calc_collisions_subgrid(self, subgrid):
@@ -237,6 +239,9 @@ class Particle:
             self.velocity[1] *= -1
         elif self.position[1] < self.radius and self.velocity[1] < 0:
             self.velocity[1] *= -1
+
+    def apply_gravity(self, g, dt):
+        self.velocity[1] += g * dt
 
     @property
     def intpos(self):
