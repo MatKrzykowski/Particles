@@ -14,9 +14,10 @@
 # * Gravity
 # * Statistics for thermodynamics
 
-# Libraries imports
-import numpy as np  # Import math modules
+from collections import defaultdict
 
+# Libraries imports
+import numpy as np
 import pygame
 
 # Size of the window
@@ -54,14 +55,15 @@ def simulation_step(i, j, dist):
     # Scalar product appearing in the calculations
     i_pos, i_vel = i.position, i.velocity
     j_pos, j_vel = j.position, j.velocity
-    scalar = np.sum((i_pos - j_pos) * (i_vel - j_vel))
+    pos_diff = i_pos - j_pos
+    scalar = np.sum((pos_diff) * (i_vel - j_vel))
     if scalar < 0.0:  # Check if collision didn't already happen
         # Calculation of constant appearing in the calculations
         A = 2 * scalar / (i.mass + j.mass) / dist**2
         # Change in the velocity vectors for i and j
         i.velocity, j.velocity = \
-            i_vel - j.mass * A * (i_pos - j_pos), \
-            j_vel - i.mass * A * (j_pos - i_pos)
+            i_vel - j.mass * A * pos_diff, \
+            j_vel - i.mass * A * -pos_diff
 
 
 ##########################################################################
@@ -76,7 +78,7 @@ class Particles():
         self.n = n
         self.n_big = n_big
         self.dt = dt
-        self.g = 0 # TODO: Account for gravity in energy calculation
+        self.g = 0  # TODO: Account for gravity in energy calculation
 
         self.subgid_size = 100
 
@@ -141,17 +143,14 @@ class Particles():
         for item in self.items:
             item.increment(self.dt)  # Integrate position using velocity
 
-        subgrid = {}
-        for i in range(self.n_grid_x):
-            for j in range(self.n_grid_y):
-                subgrid[(i, j)] = []
+        subgrid = defaultdict(list)
 
         for item in self.items:
             r = item.radius
             x = 1 / self.subgid_size
-            min_x = max(0,             int((item.position[0] - r) * x))
+            min_x = max(0, int((item.position[0] - r) * x))
             max_x = min(self.n_grid_x, int((item.position[0] + r) * x) + 1)
-            min_y = max(0,             int((item.position[1] - r) * x))
+            min_y = max(0, int((item.position[1] - r) * x))
             max_y = min(self.n_grid_y, int((item.position[1] + r) * x) + 1)
             for i in range(min_x, max_x):
                 for j in range(min_y, max_y):
@@ -166,15 +165,12 @@ class Particles():
             item.reflect()  # Reflect particle from walls
 
     def calc_collisions_subgrid(self, subgrid):
-        if not subgrid:
-            return None
         # Prepare distance array
-        n = len(subgrid)
         dist_arr = np.array([i.position for i in subgrid])
         # 2D array of distance vectors
-        x_arr = dist_arr[:,0]
+        x_arr = dist_arr[:, 0]
         x_arr = np.subtract.outer(x_arr, x_arr)
-        y_arr = dist_arr[:,1]
+        y_arr = dist_arr[:, 1]
         y_arr = np.subtract.outer(y_arr, y_arr)
         dist_arr = np.hypot(x_arr, y_arr)
 
@@ -249,7 +245,6 @@ class Particle:
     def intpos(self):
         """Return position tuple cast onto integers."""
         return (int(self.position[0]), int(self.position[1]))
-
 
     def draw_particle(self, screen):
         pygame.draw.circle(screen, self.color, self.intpos, self.radius)
