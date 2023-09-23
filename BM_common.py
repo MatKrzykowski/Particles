@@ -171,13 +171,15 @@ class Particles():
         # Prepare distance array
         n = len(subgrid)
         dist_arr = np.array([i.position for i in subgrid])
-
         # 2D array of distance vectors
-        dist_arr = dist_arr.reshape(n, 1, 2) - dist_arr
-        dist_arr = np.hypot(dist_arr[:, :, 0], dist_arr[:, :, 1])
+        x_arr = dist_arr[:,0]
+        x_arr = np.subtract.outer(x_arr, x_arr)
+        y_arr = dist_arr[:,1]
+        y_arr = np.subtract.outer(y_arr, y_arr)
+        dist_arr = np.hypot(x_arr, y_arr)
 
         radius_arr = np.array([i.radius for i in subgrid])
-        radius_arr = radius_arr + radius_arr.reshape(n, 1)
+        radius_arr = np.add.outer(radius_arr, radius_arr)
         radius_arr = radius_arr > dist_arr
 
         # Assign pairs i,j so that they point to the minima
