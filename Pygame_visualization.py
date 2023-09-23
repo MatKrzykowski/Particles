@@ -39,7 +39,7 @@ if __name__ == "__main__":
     pygame.display.set_caption('Brownian motion')
 
     # Generate list of particles
-    particles = Particles(3, 5, 2, 300, 0.002)
+    particles = Particles(2, 10, 2, 400, 0.002)
 
     # Prepare print of the text
     fontObj = pygame.font.Font('freesansbold.ttf', FONTSIZE)

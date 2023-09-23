@@ -51,18 +51,17 @@ def simulation_step(i, j, dist):
     i, j - particles,
     dist - distance between i and j, double.
     """
-    if dist <= i.radius + j.radius:  # Collision if distance too small
-        # Scalar product appearing in the calculations
-        i_pos, i_vel = i.position, i.velocity
-        j_pos, j_vel = j.position, j.velocity
-        scalar = np.sum((i_pos - j_pos) * (i_vel - j_vel))
-        if scalar < 0.0:  # Check if collision didn't already happen
-            # Calculation of constant appearing in the calculations
-            A = 2 * scalar / (i.mass + j.mass) / dist**2
-            # Change in the velocity vectors for i and j
-            i.velocity, j.velocity = \
-                i_vel - j.mass * A * (i_pos - j_pos), \
-                j_vel - i.mass * A * (j_pos - i_pos)
+    # Scalar product appearing in the calculations
+    i_pos, i_vel = i.position, i.velocity
+    j_pos, j_vel = j.position, j.velocity
+    scalar = np.sum((i_pos - j_pos) * (i_vel - j_vel))
+    if scalar < 0.0:  # Check if collision didn't already happen
+        # Calculation of constant appearing in the calculations
+        A = 2 * scalar / (i.mass + j.mass) / dist**2
+        # Change in the velocity vectors for i and j
+        i.velocity, j.velocity = \
+            i_vel - j.mass * A * (i_pos - j_pos), \
+            j_vel - i.mass * A * (j_pos - i_pos)
 
 
 ##########################################################################
@@ -78,14 +77,17 @@ class Particles():
         self.n_big = n_big
         self.dt = dt
 
+        self.subgid_size = 100
+
         # List of particles
         self.items = []
 
-        # Matrix with infinite diagonal elements
-        self.inf_triag = np.finfo(np.float64).max / 2 * np.tri(
-            n, n, dtype="float64").transpose()
-
         self.generate_particles()
+
+        assert (WIDTH % self.subgid_size == 0)
+        assert (HEIGHT % self.subgid_size == 0)
+        self.n_grid_x = WIDTH // self.subgid_size
+        self.n_grid_y = HEIGHT // self.subgid_size
 
     def generate_big(self):
         """Add up to 2 big particles in specified locations."""
@@ -138,31 +140,51 @@ class Particles():
         for item in self.items:
             item.increment(self.dt)  # Integrate position using velocity
 
-        # Prepare distance array
-        dist_arr = np.array([i.position for i in self.items])
+        subgrid = {}
+        for i in range(self.n_grid_x):
+            for j in range(self.n_grid_y):
+                subgrid[(i, j)] = []
 
-        # 2D array of distance vectors
-        dist_arr = dist_arr.reshape(self.n, 1, 2) - dist_arr
-        dist_arr = np.hypot(dist_arr[:, :, 0], dist_arr[:, :, 1])
+        for item in self.items:
+            r = item.radius
+            x = 1 / self.subgid_size
+            min_x = max(0,             int((item.position[0] - r) * x))
+            max_x = min(self.n_grid_x, int((item.position[0] + r) * x) + 1)
+            min_y = max(0,             int((item.position[1] - r) * x))
+            max_y = min(self.n_grid_y, int((item.position[1] + r) * x) + 1)
+            for i in range(min_x, max_x):
+                for j in range(min_y, max_y):
+                    subgrid[(i, j)].append(item)
 
-        dist_arr += self.inf_triag  # Make diagonal elements, otherwise 0, infinite
-
-        if self.n_big >= 2:  # Unique interaction of 2 big particles
-            simulation_step(self.items[0], self.items[1], dist_arr[1, 0])
-
-            # Remaining interactions
-            dist_arr = dist_arr[2:, :]  # Remove unnecessary elements
-
-        min_arg = np.argmin(dist_arr, 0)  # Find arguments for minima
-        # Assign pairs i,j so that they point to the minima
-        for i, j in enumerate(min_arg):
-            # Simulation step for found pair of particles
-            simulation_step(self.items[i], self.items[j + self.n_big],
-                            dist_arr[j, i])
+        for _, item in subgrid.items():
+            self.calc_collisions_subgrid(item)
 
         # Reflect from walls and other effects
         for item in self.items:
             item.reflect()  # Reflect particle from walls
+
+    def calc_collisions_subgrid(self, subgrid):
+        if not subgrid:
+            return None
+        # Prepare distance array
+        n = len(subgrid)
+        dist_arr = np.array([i.position for i in subgrid])
+
+        # 2D array of distance vectors
+        dist_arr = dist_arr.reshape(n, 1, 2) - dist_arr
+        dist_arr = np.hypot(dist_arr[:, :, 0], dist_arr[:, :, 1])
+
+        radius_arr = np.array([i.radius for i in subgrid])
+        radius_arr = radius_arr + radius_arr.reshape(n, 1)
+        radius_arr = radius_arr > dist_arr
+
+        # Assign pairs i,j so that they point to the minima
+        for i, row in enumerate(dist_arr):
+            for j, dist in enumerate(row):
+                if j >= i:
+                    break
+                if radius_arr[i, j]:
+                    simulation_step(subgrid[i], subgrid[j], dist)
 
 
 class Particle:
