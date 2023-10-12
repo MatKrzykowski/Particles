@@ -164,65 +164,71 @@ class Particles():
 
         z = 1 / self.subgid_size
         for item in self.items:
-            r = item.radius
-            min_x = max(0, int((item.position[0] - r) * z))
-            max_x = min(self.n_grid_x, int((item.position[0] + r) * z) + 1)
-            min_y = max(0, int((item.position[1] - r) * z))
-            max_y = min(self.n_grid_y, int((item.position[1] + r) * z) + 1)
-            if min_x != item.min_x:
-                if min_x > item.min_x:
-                    for y in range(item.min_y, item.max_y):
-                        self.subgrid[(item.min_x, y)].remove(item)
-                else:
-                    for y in range(item.min_y, item.max_y):
-                        self.subgrid[(min_x, y)].add(item)
-                item.min_x = min_x
-            if max_x != item.max_x:
-                if max_x < item.max_x:
-                    for y in range(item.min_y, item.max_y):
-                        self.subgrid[(max_x, y)].remove(item)
-                else:
-                    for y in range(item.min_y, item.max_y):
-                        self.subgrid[(item.max_x, y)].add(item)
-                item.max_x = max_x
-            if min_y != item.min_y:
-                if min_y > item.min_y:
-                    for x in range(item.min_x, item.max_x):
-                        self.subgrid[(x, item.min_y)].remove(item)
-                else:
-                    for x in range(item.min_x, item.max_x):
-                        self.subgrid[(x, min_y)].add(item)
-                item.min_y = min_y
-            if max_y != item.max_y:
-                if max_y < item.max_y:
-                    for x in range(item.min_x, item.max_x):
-                        self.subgrid[(x, max_y)].remove(item)
-                else:
-                    for x in range(item.min_x, item.max_x):
-                        self.subgrid[(x, item.max_y)].add(item)
-                item.max_y = max_y
+            self.update_subgrids(item, z)
 
         for _, item in self.subgrid.items():
             self.calc_collisions_subgrid(item)
 
         # Reflect from walls and other effects
         for item in self.items:
-            item.apply_gravity(self.g, self.dt)
-            item.reflect()  # Reflect particle from walls
+            # item.apply_gravity(self.g, self.dt)
+            item.reflect()
+
+    def update_subgrids(self, item, z):
+        """Upgrades subgrids in between frames.
+        
+        Works assuming a particle won't jump over any subgrid!
+        """
+        r = item.radius
+        min_x = max(0, int((item.position[0] - r) * z))
+        max_x = min(self.n_grid_x, int((item.position[0] + r) * z) + 1)
+        min_y = max(0, int((item.position[1] - r) * z))
+        max_y = min(self.n_grid_y, int((item.position[1] + r) * z) + 1)
+        if min_x != item.min_x:
+            if min_x > item.min_x:
+                for y in range(item.min_y, item.max_y):
+                    self.subgrid[(item.min_x, y)].remove(item)
+            else:
+                for y in range(item.min_y, item.max_y):
+                    self.subgrid[(min_x, y)].add(item)
+            item.min_x = min_x
+        if max_x != item.max_x:
+            if max_x < item.max_x:
+                for y in range(item.min_y, item.max_y):
+                    self.subgrid[(max_x, y)].remove(item)
+            else:
+                for y in range(item.min_y, item.max_y):
+                    self.subgrid[(item.max_x, y)].add(item)
+            item.max_x = max_x
+        if min_y != item.min_y:
+            if min_y > item.min_y:
+                for x in range(item.min_x, item.max_x):
+                    self.subgrid[(x, item.min_y)].remove(item)
+            else:
+                for x in range(item.min_x, item.max_x):
+                    self.subgrid[(x, min_y)].add(item)
+            item.min_y = min_y
+        if max_y != item.max_y:
+            if max_y < item.max_y:
+                for x in range(item.min_x, item.max_x):
+                    self.subgrid[(x, max_y)].remove(item)
+            else:
+                for x in range(item.min_x, item.max_x):
+                    self.subgrid[(x, item.max_y)].add(item)
+            item.max_y = max_y
 
     def calc_collisions_subgrid(self, subgrid):
         if not subgrid:
             return
 
-        dist_arr = subgrid.dist_arr
-        radius_arr = subgrid.calc_r_array() > dist_arr
+        dist_arr, applicable_arr = subgrid.dist_arr
 
         # Assign pairs i,j so that they point to the minima
         for i, row in enumerate(dist_arr):
             for j, dist in enumerate(row):
                 if j >= i:
                     break
-                if radius_arr[i, j]:
+                if applicable_arr[i, j]:
                     simulation_step(subgrid.items[i], subgrid.items[j], dist)
 
 
@@ -272,12 +278,14 @@ class Particle:
     def reflect(self):
         """Bouncing off the walls by the particle."""
         # Along the x axis
-        if self.position[0] > config.width - self.radius and self.velocity[0] > 0:
+        if self.position[0] > config.width - self.radius and self.velocity[
+                0] > 0:
             self.velocity[0] *= -1
         elif self.position[0] < self.radius and self.velocity[0] < 0:
             self.velocity[0] *= -1
         # Along the y axis
-        if self.position[1] > config.height - self.radius and self.velocity[1] > 0:
+        if self.position[1] > config.height - self.radius and self.velocity[
+                1] > 0:
             self.velocity[1] *= -1
         elif self.position[1] < self.radius and self.velocity[1] < 0:
             self.velocity[1] *= -1
@@ -294,7 +302,9 @@ class Particle:
         pygame.draw.circle(screen, self.color, self.intpos, self.radius)
         pygame.gfxdraw.aacircle(screen, *self.intpos, self.radius, self.color)
 
+
 class Subgrid():
+
     def __init__(self):
         self._items = []
         self.recalculate_r_array = True
@@ -303,6 +313,7 @@ class Subgrid():
         self.x_arr = np.zeros((1, 1))
         self.y_arr = np.zeros((1, 1))
         self._dist_arr = np.zeros((1, 1))
+        self._applicable_array = np.zeros((1, 1))
 
     def add(self, item):
         self._items.append(item)
@@ -321,6 +332,7 @@ class Subgrid():
 
     def calc_r_array(self):
         if self.recalculate_r_array:
+            del self.r_array
             radius_arr = np.array([i.radius for i in self._items])
             self.r_array = np.add.outer(radius_arr, radius_arr)
             self.recalculate_r_array = False
@@ -331,12 +343,28 @@ class Subgrid():
         dist_arr_1d = np.array([i.position for i in self._items]).transpose()
         x_arr_1d = dist_arr_1d[0, :]
         y_arr_1d = dist_arr_1d[1, :]
+
+        # Reuse old memory
         if self._dist_arr.shape[0] == len(self._items):
             self.x_arr = np.subtract.outer(x_arr_1d, x_arr_1d, out=self.x_arr)
             self.y_arr = np.subtract.outer(y_arr_1d, y_arr_1d, out=self.y_arr)
-            self._dist_arr = np.hypot(self.x_arr, self.y_arr, out=self._dist_arr)
+            self._dist_arr = np.hypot(self.x_arr, self.y_arr,
+                                      out=self._dist_arr)
+
+            np.subtract(
+                self.calc_r_array(), self._dist_arr, out=self._applicable_array)
+
+        # Alocate new memory
         else:
+            del self.x_arr
+            del self.y_arr
+            del self._dist_arr
+            del self._applicable_array
             self.x_arr = np.subtract.outer(x_arr_1d, x_arr_1d)
             self.y_arr = np.subtract.outer(y_arr_1d, y_arr_1d)
             self._dist_arr = np.hypot(self.x_arr, self.y_arr)
-        return self._dist_arr
+
+            self._applicable_array = self.calc_r_array() - self._dist_arr
+
+        np.heaviside(self._applicable_array, 1.0, out=self._applicable_array)
+        return self._dist_arr, self._applicable_array
