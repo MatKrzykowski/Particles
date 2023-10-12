@@ -1,20 +1,5 @@
-# BM_common.py
-#
-# Basis for Brownian motion simulation.
-#
-# Based on program I've written in AngularJS in 2014
-# https://www.khanacademy.org/computer-programming/elastic-collisionsbrownian-movement/5114294751461376
-#
-# Changelog:
-# 18.09.2017 - Script updated and revised
-# 19.09.2017 - Functions collected into Particles class
-#
-# To-do:
-# * Damping
-# * Gravity
-# * Statistics for thermodynamics
+"""BM_common.py"""
 
-# Libraries imports
 import numpy as np
 
 from common import RED, BLUE, length
@@ -33,7 +18,7 @@ class Particles():
         self.n = n
         self.n_big = n_big
         self.dt = dt
-        self.g = 0  # TODO: Account for gravity in energy calculation
+        # self.g = 0
 
         self.subgid_size = config.subgid_size
 
@@ -42,15 +27,18 @@ class Particles():
 
         self.generate_particles()
 
-        assert (config.width % self.subgid_size == 0)
-        assert (config.height % self.subgid_size == 0)
+        assert config.width % self.subgid_size == 0
+        assert config.height % self.subgid_size == 0
         self.n_grid_x = config.width // self.subgid_size
         self.n_grid_y = config.height // self.subgid_size
 
-        self.subgrid = {}
+        self.subgrid = self.generate_subgrid()
+
+    def generate_subgrid(self):
+        subgrid = {}
         for i in range(self.n_grid_x):
             for j in range(self.n_grid_y):
-                self.subgrid[(i, j)] = Subgrid()
+                subgrid[(i, j)] = Subgrid()
 
         for item in self.items:
             r = item.radius
@@ -65,7 +53,8 @@ class Particles():
             item.max_y = max_y
             for i in range(min_x, max_x):
                 for j in range(min_y, max_y):
-                    self.subgrid[(i, j)].add(item)
+                    subgrid[(i, j)].add(item)
+        return subgrid
 
     def generate_big(self):
         """Add up to 2 big particles in specified locations."""
@@ -99,9 +88,6 @@ class Particles():
         self.generate_big()  # Add 2 large particles in specified locations
 
         self.generate_small()  # Generate the rest of the particles
-
-        # Assign list of radii of possible collisions
-        self.max_dist = np.array([i.radius + self.max_r for i in self.items])
 
     @property
     def total_energy(self):
