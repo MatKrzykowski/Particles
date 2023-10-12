@@ -8,8 +8,7 @@ import pygame.locals
 # Import my common file
 from BM_common import Particle, Particles, BLACK
 
-# Size of the window
-WIDTH, HEIGHT = 800, 600
+from config import default_config as config
 
 
 def draw_energy(screen, objs, font):
@@ -32,17 +31,15 @@ if __name__ == "__main__":
     N = 4  # Number of evolution steps per frame
     fpsClock = pygame.time.Clock()  # Clock initialization
 
-    FONTSIZE = 18
-
     # Prepare the display
-    DISPLAYSURF = pygame.display.set_mode((WIDTH, HEIGHT), 0, 32)
+    DISPLAYSURF = pygame.display.set_mode((config.width, config.height), 0, 32)
     pygame.display.set_caption('Brownian motion')
 
     # Generate list of particles
     particles = Particles(2, 10, 2, 500, 0.002)
 
     # Prepare print of the text
-    fontObj = pygame.font.Font('freesansbold.ttf', FONTSIZE)
+    fontObj = pygame.font.Font('freesansbold.ttf', config.fontsize)
     textSurfaceObj = fontObj.render('', True, BLACK)
     textRectObj = textSurfaceObj.get_rect()
 
