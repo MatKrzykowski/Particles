@@ -167,42 +167,38 @@ class Particles():
             max_x = min(self.n_grid_x, int((item.position[0] + r) * x) + 1)
             min_y = max(0, int((item.position[1] - r) * x))
             max_y = min(self.n_grid_y, int((item.position[1] + r) * x) + 1)
-            if min_x > item.min_x:
-                for x in range(item.min_x, min_x):
+            if min_x != item.min_x:
+                if min_x > item.min_x:
                     for y in range(item.min_y, item.max_y):
-                        self.subgrid[(x, y)].remove(item)
-            elif min_x < item.min_x:
-                for x in range(min_x, item.min_x):
+                        self.subgrid[(item.min_x, y)].remove(item)
+                else:
                     for y in range(item.min_y, item.max_y):
-                        self.subgrid[(x, y)].append(item)
-            item.min_x = min_x
-            if max_x < item.max_x:
-                for x in range(max_x, item.max_x):
+                        self.subgrid[(min_x, y)].append(item)
+                item.min_x = min_x
+            if max_x != item.max_x:
+                if max_x < item.max_x:
                     for y in range(item.min_y, item.max_y):
-                        self.subgrid[(x, y)].remove(item)
-            elif max_x > item.max_x:
-                for x in range(item.max_x, max_x):
+                        self.subgrid[(max_x, y)].remove(item)
+                else:
                     for y in range(item.min_y, item.max_y):
-                        self.subgrid[(x, y)].append(item)
-            item.max_x = max_x
-            if min_y > item.min_y:
-                for y in range(item.min_y, min_y):
+                        self.subgrid[(item.max_x, y)].append(item)
+                item.max_x = max_x
+            if min_y != item.min_y:
+                if min_y > item.min_y:
                     for x in range(item.min_x, item.max_x):
-                        self.subgrid[(x, y)].remove(item)
-            elif min_y < item.min_y:
-                for y in range(min_y, item.min_y):
+                        self.subgrid[(x, item.min_y)].remove(item)
+                else:
                     for x in range(item.min_x, item.max_x):
-                        self.subgrid[(x, y)].append(item)
-            item.min_y = min_y
-            if max_y < item.max_y:
-                for y in range(max_y, item.max_y):
+                        self.subgrid[(x, min_y)].append(item)
+                item.min_y = min_y
+            if max_y != item.max_y:
+                if max_y < item.max_y:
                     for x in range(item.min_x, item.max_x):
-                        self.subgrid[(x, y)].remove(item)
-            elif max_y > item.max_y:
-                for y in range(item.max_y, max_y):
+                        self.subgrid[(x, max_y)].remove(item)
+                else:
                     for x in range(item.min_x, item.max_x):
-                        self.subgrid[(x, y)].append(item)
-            item.max_y = max_y
+                        self.subgrid[(x, item.max_y)].append(item)
+                item.max_y = max_y
 
         for _, item in self.subgrid.items():
             self.calc_collisions_subgrid(item)
@@ -216,11 +212,11 @@ class Particles():
         if not subgrid:
             return
         # Prepare distance array
-        dist_arr = np.array([i.position for i in subgrid])
+        dist_arr = np.array([i.position for i in subgrid]).transpose()
         # 2D array of distance vectors
-        x_arr = dist_arr[:, 0]
+        x_arr = dist_arr[0, :]
         x_arr = np.subtract.outer(x_arr, x_arr)
-        y_arr = dist_arr[:, 1]
+        y_arr = dist_arr[1, :]
         y_arr = np.subtract.outer(y_arr, y_arr)
         dist_arr = np.hypot(x_arr, y_arr)
 
