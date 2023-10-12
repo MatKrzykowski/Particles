@@ -13,10 +13,7 @@ class Particles():
     """Class describing all particles and their interactions in the simulation."""
 
     def __init__(self, min_r, max_r, n_big, n, dt):
-        self.min_r = min_r
-        self.max_r = max_r
         self.n = n
-        self.n_big = n_big
         self.dt = dt
         # self.g = 0
 
@@ -25,7 +22,7 @@ class Particles():
         # List of particles
         self.items = []
 
-        self.generate_particles()
+        self.generate_particles(min_r, max_r, n_big)
 
         assert config.width % self.subgid_size == 0
         assert config.height % self.subgid_size == 0
@@ -56,19 +53,19 @@ class Particles():
                     subgrid[(i, j)].add(item)
         return subgrid
 
-    def generate_big(self):
+    def generate_big(self, n_big: int):
         """Add up to 2 big particles in specified locations."""
-        if self.n_big >= 1:
+        if n_big >= 1:
             self.items.append(Particle(100, 100, 200, 300, 100, color=RED))
-        if self.n_big >= 2:
+        if n_big >= 2:
             self.items.append(Particle(500, 100, 100, 300, 100, color=BLUE))
 
-    def generate_small(self):
+    def generate_small(self, min_r: int, max_r: int):
         """Add up to n small particles in random locations."""
         while len(self.items) < self.n:  # While particles are being generated
 
             # Randomize radius
-            r = np.random.randint(self.min_r, self.max_r + 1)
+            r = np.random.randint(min_r, max_r + 1)
 
             # Randomize position
             pos = (r + np.random.randint(config.width - 2 * r),
@@ -83,11 +80,11 @@ class Particles():
             else:
                 self.items.append(Particle(*pos, 0, 0, r))
 
-    def generate_particles(self):
+    def generate_particles(self, min_r: int, max_r: int, n_big: int):
         """Generate n particles, some in random locations."""
-        self.generate_big()  # Add 2 large particles in specified locations
+        self.generate_big(n_big)  # Add 2 large particles in specified locations
 
-        self.generate_small()  # Generate the rest of the particles
+        self.generate_small(min_r, max_r)  # Generate the rest of the particles
 
     @property
     def total_energy(self):
