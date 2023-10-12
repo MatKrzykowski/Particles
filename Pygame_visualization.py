@@ -54,7 +54,7 @@ if __name__ == "__main__":
         for item in particles.items:
             item.draw_particle(DISPLAYSURF)
 
-        draw_energy(DISPLAYSURF, particles, fontObj)  # Write the energy text
+        # draw_energy(DISPLAYSURF, particles, fontObj)  # Write the energy text
         draw_FPS(DISPLAYSURF, fontObj)  # Write the FPS text
 
         for i in range(N):
