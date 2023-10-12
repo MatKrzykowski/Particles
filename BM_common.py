@@ -92,6 +92,23 @@ class Particles():
         self.n_grid_x = WIDTH // self.subgid_size
         self.n_grid_y = HEIGHT // self.subgid_size
 
+        self.subgrid = defaultdict(list)
+
+        for item in self.items:
+            r = item.radius
+            x = 1 / self.subgid_size
+            min_x = max(0, int((item.position[0] - r) * x))
+            max_x = min(self.n_grid_x, int((item.position[0] + r) * x) + 1)
+            min_y = max(0, int((item.position[1] - r) * x))
+            max_y = min(self.n_grid_y, int((item.position[1] + r) * x) + 1)
+            item.min_x = min_x
+            item.max_x = max_x
+            item.min_y = min_y
+            item.max_y = max_y
+            for i in range(min_x, max_x):
+                for j in range(min_y, max_y):
+                    self.subgrid[(i, j)].append(item)
+
     def generate_big(self):
         """Add up to 2 big particles in specified locations."""
         if self.n_big >= 1:
@@ -143,8 +160,6 @@ class Particles():
         for item in self.items:
             item.increment(self.dt)  # Integrate position using velocity
 
-        subgrid = defaultdict(list)
-
         for item in self.items:
             r = item.radius
             x = 1 / self.subgid_size
@@ -152,11 +167,44 @@ class Particles():
             max_x = min(self.n_grid_x, int((item.position[0] + r) * x) + 1)
             min_y = max(0, int((item.position[1] - r) * x))
             max_y = min(self.n_grid_y, int((item.position[1] + r) * x) + 1)
-            for i in range(min_x, max_x):
-                for j in range(min_y, max_y):
-                    subgrid[(i, j)].append(item)
+            if min_x > item.min_x:
+                for x in range(item.min_x, min_x):
+                    for y in range(item.min_y, item.max_y):
+                        self.subgrid[(x, y)].remove(item)
+            elif min_x < item.min_x:
+                for x in range(min_x, item.min_x):
+                    for y in range(item.min_y, item.max_y):
+                        self.subgrid[(x, y)].append(item)
+            item.min_x = min_x
+            if max_x < item.max_x:
+                for x in range(max_x, item.max_x):
+                    for y in range(item.min_y, item.max_y):
+                        self.subgrid[(x, y)].remove(item)
+            elif max_x > item.max_x:
+                for x in range(item.max_x, max_x):
+                    for y in range(item.min_y, item.max_y):
+                        self.subgrid[(x, y)].append(item)
+            item.max_x = max_x
+            if min_y > item.min_y:
+                for y in range(item.min_y, min_y):
+                    for x in range(item.min_x, item.max_x):
+                        self.subgrid[(x, y)].remove(item)
+            elif min_y < item.min_y:
+                for y in range(min_y, item.min_y):
+                    for x in range(item.min_x, item.max_x):
+                        self.subgrid[(x, y)].append(item)
+            item.min_y = min_y
+            if max_y < item.max_y:
+                for y in range(max_y, item.max_y):
+                    for x in range(item.min_x, item.max_x):
+                        self.subgrid[(x, y)].remove(item)
+            elif max_y > item.max_y:
+                for y in range(item.max_y, max_y):
+                    for x in range(item.min_x, item.max_x):
+                        self.subgrid[(x, y)].append(item)
+            item.max_y = max_y
 
-        for _, item in subgrid.items():
+        for _, item in self.subgrid.items():
             self.calc_collisions_subgrid(item)
 
         # Reflect from walls and other effects
@@ -165,6 +213,8 @@ class Particles():
             item.reflect()  # Reflect particle from walls
 
     def calc_collisions_subgrid(self, subgrid):
+        if not subgrid:
+            return
         # Prepare distance array
         dist_arr = np.array([i.position for i in subgrid])
         # 2D array of distance vectors
@@ -206,6 +256,11 @@ class Particle:
         self.mass = self.rho * np.pi * radius**2  # Particle mass
         self.radius = radius  # Particle radius
         self.color = color  # Particle color
+
+        self.min_x = None
+        self.max_x = None
+        self.min_y = None
+        self.max_y = None
 
     @property
     def kinetic(self):
