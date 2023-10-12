@@ -23,10 +23,11 @@ import pygame
 from config import default_config as config
 
 # Colors
-BLACK = (0, 0, 0)
-BLUE = (0, 128, 255)
-RED = (255, 0, 0)
-PURPLE = (200, 0, 255)
+BLACK = pygame.Color((0, 0, 0))
+WHITE = pygame.Color((255, 255, 255))
+BLUE = pygame.Color((0, 128, 255))
+RED = pygame.Color((255, 0, 0))
+PURPLE = pygame.Color((200, 0, 255))
 
 
 def sqlength(A):
@@ -79,7 +80,7 @@ class Particles():
         self.dt = dt
         self.g = 0  # TODO: Account for gravity in energy calculation
 
-        self.subgid_size = 100
+        self.subgid_size = config.subgid_size
 
         # List of particles
         self.items = []

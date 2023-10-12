@@ -6,7 +6,7 @@ import pygame.gfxdraw
 import pygame.locals
 
 # Import my common file
-from BM_common import Particle, Particles, BLACK
+from BM_common import Particles, BLACK, WHITE
 
 from config import default_config as config
 
@@ -27,8 +27,6 @@ def draw_FPS(screen, font):
 if __name__ == "__main__":
     pygame.init()  # Initialize pygame
 
-    FPS = 60  # Frames per second
-    N = 4  # Number of evolution steps per frame
     fpsClock = pygame.time.Clock()  # Clock initialization
 
     # Prepare the display
@@ -45,7 +43,7 @@ if __name__ == "__main__":
 
     # Draw the simulation
     while True:
-        DISPLAYSURF.fill((255, 255, 255))  # Clear the surface
+        DISPLAYSURF.fill(WHITE)  # Clear the surface
 
         # Draw all particles
         for item in particles.items:
@@ -54,7 +52,7 @@ if __name__ == "__main__":
         # draw_energy(DISPLAYSURF, particles, fontObj)  # Write the energy text
         draw_FPS(DISPLAYSURF, fontObj)  # Write the FPS text
 
-        for i in range(N):
+        for i in range(config.n_subframes):
             particles.time_evolution()
 
         for event in pygame.event.get():
@@ -63,4 +61,4 @@ if __name__ == "__main__":
                 sys.exit()
 
         pygame.display.update()
-        fpsClock.tick(FPS)
+        fpsClock.tick(config.fps)
