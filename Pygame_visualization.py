@@ -2,12 +2,10 @@ import sys
 
 # Libraries import
 import pygame
-import pygame.gfxdraw
-import pygame.locals
 
 # Import my common file
-from BM_common import Particles, BLACK, WHITE
-
+from BM_common import Particles
+from common import BLACK, WHITE
 from config import default_config as config
 
 
@@ -56,7 +54,7 @@ if __name__ == "__main__":
             particles.time_evolution()
 
         for event in pygame.event.get():
-            if event.type == pygame.locals.QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
