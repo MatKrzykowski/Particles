@@ -8,8 +8,10 @@ from config import default_config as config
 
 from common import PURPLE, length, sqlength
 
+
 class Particle:
     """Class describing particle"""
+
     rho = 1.0  # Density
 
     def __init__(self, x, y, vx, vy, radius, color=PURPLE):
@@ -54,14 +56,12 @@ class Particle:
     def reflect(self):
         """Bouncing off the walls by the particle."""
         # Along the x axis
-        if self.position[0] > config.width - self.radius and self.velocity[
-                0] > 0:
+        if self.position[0] > config.width - self.radius and self.velocity[0] > 0:
             self.velocity[0] *= -1
         elif self.position[0] < self.radius and self.velocity[0] < 0:
             self.velocity[0] *= -1
         # Along the y axis
-        if self.position[1] > config.height - self.radius and self.velocity[
-                1] > 0:
+        if self.position[1] > config.height - self.radius and self.velocity[1] > 0:
             self.velocity[1] *= -1
         elif self.position[1] < self.radius and self.velocity[1] < 0:
             self.velocity[1] *= -1

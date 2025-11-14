@@ -9,7 +9,7 @@ from physics import elastic_collision
 from subgrid import Subgrid
 
 
-class Particles():
+class Particles:
     """Class describing all particles and their interactions in the simulation."""
 
     def __init__(self, min_r, max_r, n_big, n, dt):
@@ -68,8 +68,10 @@ class Particles():
             r = np.random.randint(min_r, max_r + 1)
 
             # Randomize position
-            pos = (r + np.random.randint(config.width - 2 * r),
-                   r + np.random.randint(config.height - 2 * r))
+            pos = (
+                r + np.random.randint(config.width - 2 * r),
+                r + np.random.randint(config.height - 2 * r),
+            )
 
             # Check if there are no particle overlap
             for item in self.items:
@@ -115,7 +117,7 @@ class Particles():
 
     def update_subgrids(self, item, z):
         """Upgrades subgrids in between frames.
-        
+
         Works assuming a particle won't jump over any subgrid!
         """
         r = item.radius

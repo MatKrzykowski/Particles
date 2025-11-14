@@ -2,14 +2,16 @@
 
 from dataclasses import dataclass
 
+
 @dataclass()
-class Config():
+class Config:
     width: int
     height: int
     subgid_size: int
     fontsize: int
     n_subframes: int
     fps: int
+
 
 default_config = Config(
     800,  # window width

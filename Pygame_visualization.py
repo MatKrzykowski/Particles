@@ -16,8 +16,7 @@ def draw_energy(screen, objs, font):
 
 
 def draw_FPS(screen, font):
-    text_render = font.render("FPS: " + str(round(fpsClock.get_fps(), 1)), True,
-                              BLACK)
+    text_render = font.render("FPS: " + str(round(fpsClock.get_fps(), 1)), True, BLACK)
     textRectObj.topright = (699, 0)
     screen.blit(text_render, textRectObj)
 
@@ -29,14 +28,14 @@ if __name__ == "__main__":
 
     # Prepare the display
     DISPLAYSURF = pygame.display.set_mode((config.width, config.height), 0, 32)
-    pygame.display.set_caption('Brownian motion')
+    pygame.display.set_caption("Brownian motion")
 
     # Generate list of particles
     particles = Particles(2, 10, 2, 500, 0.002)
 
     # Prepare print of the text
-    fontObj = pygame.font.Font('freesansbold.ttf', config.fontsize)
-    textSurfaceObj = fontObj.render('', True, BLACK)
+    fontObj = pygame.font.Font("freesansbold.ttf", config.fontsize)
+    textSurfaceObj = fontObj.render("", True, BLACK)
     textRectObj = textSurfaceObj.get_rect()
 
     # Draw the simulation

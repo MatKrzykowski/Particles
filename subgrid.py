@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class Subgrid():
+class Subgrid:
 
     def __init__(self):
         self._items = []
@@ -48,11 +48,9 @@ class Subgrid():
         if self._dist_arr.shape[0] == len(self._items):
             self.x_arr = np.subtract.outer(x_arr_1d, x_arr_1d, out=self.x_arr)
             self.y_arr = np.subtract.outer(y_arr_1d, y_arr_1d, out=self.y_arr)
-            self._dist_arr = np.hypot(
-                self.x_arr, self.y_arr, out=self._dist_arr)
+            self._dist_arr = np.hypot(self.x_arr, self.y_arr, out=self._dist_arr)
 
-            np.subtract(
-                self.calc_r_array(), self._dist_arr, out=self._applicable_array)
+            np.subtract(self.calc_r_array(), self._dist_arr, out=self._applicable_array)
 
         # Alocate new memory
         else:
